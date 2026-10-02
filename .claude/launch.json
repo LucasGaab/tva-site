@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "tva",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["C:/Users/lucas/TVA-SITE/.claude/devserver.py"],
+      "port": 5174
+    }
+  ]
+}

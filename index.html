@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TVA · Autoridade de Variância Temporal</title>
+<meta name="description" content="Portal de atendimento oficial da Autoridade de Variância Temporal. Para todo o sempre, em triplicata. (Site de fã, fictício.)">
+<meta name="theme-color" content="#120C08">
+<script>
+  // Tema antes do primeiro paint: evita o flash de papel no turno da noite.
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('tva.theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Instrument+Serif:ital@0;1&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css?v=2">
+<link rel="stylesheet" href="css/sections.css?v=2">
+<link rel="stylesheet" href="css/widgets.css?v=2">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='29' fill='%23120C08' stroke='%23FF7A1A' stroke-width='5'/%3E%3Cpath d='M20 16h24L32 32 44 48H20l12-16z' fill='%23FF7A1A'/%3E%3C/svg%3E">
+</head>
+<body>
+
+<!-- ============ SVG DEFS (emblema, filtros) ============ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="emblem" viewBox="0 0 64 64">
+      <circle cx="32" cy="32" r="29" fill="none" stroke="currentColor" stroke-width="3.5"/>
+      <circle cx="32" cy="32" r="23" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="1.5 3.2"/>
+      <path d="M21 15h22L32 31.5 43 49H21l11-17.5z" fill="currentColor"/>
+      <path d="M9 32h46" stroke="currentColor" stroke-width="2"/>
+      <path d="M44 32c4 0 6-4 10-7" stroke="currentColor" stroke-width="2" fill="none" opacity=".55"/>
+    </symbol>
+    <filter id="ink-rough">
+      <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="2.6"/>
+    </filter>
+    <filter id="stamp-rough" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency=".75" numOctaves="3" seed="3" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.2 1.35" result="mask"/>
+      <feComposite in="SourceGraphic" in2="mask" operator="in" result="m"/>
+      <feDisplacementMap in="m" in2="n" scale="2"/>
+    </filter>
+  </defs>
+</svg>
+
+<!-- ============ PRELOADER ============ -->
+<div id="preloader" aria-live="polite">
+  <div class="pre-inner">
+    <svg class="pre-emblem"><use href="#emblem"/></svg>
+    <p class="pre-kicker">Autoridade de Variância Temporal · Atendimento ao Público</p>
+    <p class="pre-line"><span id="pre-status">Sincronizando com a Linha do Tempo Sagrada</span><span class="dots"></span></p>
+    <div class="pre-bar"><i id="pre-fill"></i></div>
+    <p class="pre-case">Processo nº <b id="pre-case">-----</b></p>
+  </div>
+</div>
+
+<!-- ============ CAMADAS GLOBAIS ============ -->
+<canvas id="gl" aria-hidden="true"></canvas>
+<div class="vignette" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+<div id="era-flash" aria-hidden="true"></div>
+<div id="nexus-overlay" aria-hidden="true">
+  <div class="nx-slices"></div>
+  <div class="nx-alert"><span>⚠ EVENTO NEXUS DETECTADO</span><small>Origem: esta página. Ramificação em curso.</small></div>
+</div>
+<div id="prune-wipe" aria-hidden="true"><span>PODADO · RESTAURANDO LINHA SAGRADA</span></div>
+<div id="cursor" aria-hidden="true"><div class="c-ring"><i class="c-hand h"></i><i class="c-hand m"></i></div><div class="c-label"></div></div>
+
+<a class="skip" href="#orientacao">Pular para o conteúdo</a>
+
+<!-- ============ TOPO ============ -->
+<header class="topbar" id="topbar">
+  <a class="brand" href="#top" aria-label="TVA, início">
+    <svg class="brand-emblem"><use href="#emblem"/></svg>
+    <span class="brand-text"><b>TVA</b><small>Autoridade de<br>Variância Temporal</small></span>
+  </a>
+  <nav class="nav" id="nav" aria-label="Seções">
+    <a href="#orientacao" data-num="01">Orientação</a>
+    <a href="#linha" data-num="02">Linha Sagrada</a>
+    <a href="#consulta" data-num="03">Consulta</a>
+    <a href="#mapa" data-num="04">Mapa</a>
+    <a href="#poda" data-num="05">Poda</a>
+    <a href="#nexus" data-num="06">Nexus</a>
+    <a href="#departamentos" data-num="07">Departamentos</a>
+  </nav>
+  <span class="era-chip" aria-hidden="true"><b id="era-chip-year">∞</b><i id="era-chip-name">Recepção</i></span>
+  <div class="top-tools">
+    <button class="deviation" id="deviation-btn" aria-label="Abrir seu dossiê" data-cursor="dossiê">
+      <span class="dev-label">Desvio</span>
+      <span class="dev-meter"><i id="dev-fill"></i></span>
+      <span class="dev-val" id="dev-val">0%</span>
+    </button>
+    <button class="icon-btn" id="sound-btn" aria-pressed="false" aria-label="Ligar sons" data-cursor="som">
+      <svg viewBox="0 0 24 24" class="ic-sound-off"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M17 9l5 6M22 9l-5 6" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+      <svg viewBox="0 0 24 24" class="ic-sound-on"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+    </button>
+    <button class="icon-btn" id="theme-btn" aria-label="Alternar tema" data-cursor="tema">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg>
+    </button>
+    <button class="icon-btn menu-btn" id="menu-btn" aria-label="Abrir menu" aria-expanded="false"><span></span><span></span></button>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ============ 1 · HERO ============ -->
+<section class="hero cinema" id="hero" data-era="Recepção" data-year="∞">
+  <div class="hero-grid">
+    <p class="hero-kicker reveal"><span class="tag">Formulário TVA-0001</span> Atendimento ao Público · Turno Eterno</p>
+    <h1 class="hero-title">
+      <span class="ht-line"><span>Para todo</span></span>
+      <span class="ht-line"><span>o sempre,</span></span>
+      <span class="ht-line ht-serif"><span><em>em triplicata.</em></span></span>
+    </h1>
+    <div class="hero-foot">
+      <p class="hero-lede reveal">Você foi detectado fora do roteiro. Não se preocupe: <em>quase</em> ninguém é podado no primeiro atendimento.
+        Atravesse a porta, preencha os formulários e aguarde ser chamado. Ou não. A escolha é sua.<sup>*</sup></p>
+      <div class="hero-cta reveal">
+        <a class="btn btn-door" href="#orientacao" data-cursor="entrar"><span>Iniciar processamento</span><i>→</i></a>
+        <a class="btn btn-ghost" href="#consulta" data-cursor="consultar">Já sou variante</a>
+      </div>
+      <p class="hero-fine">*A escolha não é sua. Ver Termos de Uso, cláusula 1.1.</p>
+    </div>
+  </div>
+  <div class="hero-meta" aria-hidden="true">
+    <span>Porta Temporal · Nº 7 · Hall C</span>
+    <span>Status: <b class="blink-amber">ABERTA</b></span>
+    <span id="hero-clock">00:00:00</span>
+  </div>
+  <div class="scroll-cue" aria-hidden="true"><span>Role para atravessar</span><i></i></div>
+</section>
+
+<!-- ============ 2 · ORIENTAÇÃO ============ -->
+<section class="paper-section orient" id="orientacao" data-era="Orientação" data-year="0001">
+  <div class="sec-head">
+    <span class="sec-num">01</span>
+    <h2 class="sec-title">Orientação<br><span class="serif">obrigatória</span></h2>
+    <p class="sec-sub">Duração estimada: 4 min. Duração real: eternidade relativa.</p>
+  </div>
+
+  <div class="orient-grid">
+    <div class="presenter-wrap">
+      <div class="presenter-stage">
+        <div class="bulb-matrix" aria-hidden="true"></div>
+        <div id="presenter" class="mm-host mm-presenter" aria-label="Miss Minutes, guia de orientação"></div>
+        <div class="presenter-bubble" id="presenter-bubble" aria-live="polite"><p>Oi, oi! Eu sou a Miss Minutes, sua guia de orientação aqui na TVA!</p></div>
+        <div class="presenter-pedestal"><span>MISS MINUTES · ASSISTENTE DE ORIENTAÇÃO · v.∞</span></div>
+      </div>
+      <div class="presenter-ctrl">
+        <button class="chip" data-mm-expr="happy">feliz</button>
+        <button class="chip" data-mm-expr="menace">ameaçadora</button>
+        <button class="chip" data-mm-expr="oops">"oops"</button>
+        <button class="chip" data-mm-expr="wink">piscadinha</button>
+      </div>
+    </div>
+
+    <article class="dossier-doc">
+      <header class="doc-head">
+        <span>DOC. HIST-001 · CLASSIFICAÇÃO: PÚBLICA*</span>
+        <span>REV. 4.817</span>
+      </header>
+      <h3 class="doc-title">Nossa história <em>(versão oficial)</em></h3>
+      <p>No princípio, existia uma <span class="redact" tabindex="0" data-truth="guerra entre infinitas versões de um mesmo homem">grande desordem</span>.
+        Os sábios <b>Guardiões do Tempo</b> trouxeram paz organizando todas as realidades numa única, gloriosa e perfeitamente arquivada
+        <b>Linha do Tempo Sagrada</b>.</p>
+      <p>Para protegê-la, criaram a Autoridade de Variância Temporal: milhares de servidores dedicados que
+        <span class="redact" tabindex="0" data-truth="foram arrancados das próprias vidas e tiveram a memória apagada">se voluntariaram com alegria</span>
+        para garantir que tudo aconteça exatamente como deve acontecer.</p>
+      <p>Os Guardiões continuam entre nós, <span class="redact" tabindex="0" data-truth="eram androides. O verdadeiro chefe é Aquele Que Permanece">velando por cada minuto</span>.
+        Quando alguém sai do roteiro, um <b>Evento Nexus</b> acontece, a linha <b>ramifica</b>, e nossos agentes resolvem com uma simples <b>poda</b>.
+        Indolor.<sup>†</sup></p>
+      <p class="doc-note">* Passe o cursor (ou toque) nas tarjas pretas por sua conta e risco. Cada leitura indevida será anotada.<br>† Indolor para a TVA.</p>
+      <div class="doc-stamps" aria-hidden="true">
+        <span class="mini-stamp">REVISADO</span><span class="mini-stamp rot">ARQUIVADO</span>
+      </div>
+    </article>
+  </div>
+
+  <ol class="pillars">
+    <li class="pillar reveal"><span class="p-n">I</span><h4>A Linha é uma só</h4><p>Toda realidade alternativa é um rascunho. Rascunhos vão para o lixo.</p></li>
+    <li class="pillar reveal"><span class="p-n">II</span><h4>Variantes não são vilões</h4><p>São só pessoas que escolheram errado. Toda escolha é errada, se não estiver no roteiro.</p></li>
+    <li class="pillar reveal"><span class="p-n">III</span><h4>Papelada salva vidas</h4><p>Linhas do tempo inteiras. Por isso pedimos três vias.</p></li>
+    <li class="pillar reveal"><span class="p-n">IV</span><h4>O tempo não para</h4><p>Exceto aqui. Aqui ele espera na fila como todo mundo.</p></li>
+  </ol>
+</section>
+
+<!-- ============ 3 · LINHA DO TEMPO SAGRADA (cinemática, sticky) ============ -->
+<section class="timeline-story cinema" id="linha" data-era="Linha Sagrada" data-year="—">
+  <div class="ts-sticky">
+    <div class="ts-head">
+      <span class="sec-num">02</span>
+      <h2 class="sec-title light">A Linha do Tempo<br><span class="serif">Sagrada</span></h2>
+    </div>
+    <div class="ts-eras" id="ts-eras">
+      <article class="era-card" data-at="0.06" data-year="0000" data-name="O Princípio">
+        <span class="ec-k">ERA 01 · ANTES DO TEMPO</span>
+        <h3>O Princípio</h3>
+        <p>Antes havia infinitas linhas, e infinitas versões de alguém disputando todas elas. Depois houve uma vitória. Depois, papelada.</p>
+      </article>
+      <article class="era-card" data-at="0.22" data-year="1893" data-name="Chicago">
+        <span class="ec-k">ERA 02 · CHICAGO, FEIRA MUNDIAL</span>
+        <h3>1893</h3>
+        <p>Um inventor apresenta um aparelho que ninguém entende e um manual que ninguém escreveu. Ou escreveu. Paradoxos ontológicos estão em análise desde 1893.</p>
+      </article>
+      <article class="era-card" data-at="0.38" data-year="1985" data-name="Oshkosh">
+        <span class="ec-k">ERA 03 · OSHKOSH, WISCONSIN</span>
+        <h3>1985</h3>
+        <p>Feira renascentista. Fantasias questionáveis. Uma unidade inteira de Minutemen "perdida". Ocorrência ainda aberta no balcão 4.</p>
+      </article>
+      <article class="era-card" data-at="0.54" data-year="2050" data-name="Haven Hills">
+        <span class="ec-k">ERA 04 · HAVEN HILLS</span>
+        <h3>2050</h3>
+        <p>Furacão de categoria máxima. Local perfeito para se esconder de nós. Spoiler: não é.</p>
+      </article>
+      <article class="era-card" data-at="0.70" data-year="2077" data-name="Lamentis-1">
+        <span class="ec-k">ERA 05 · LAMENTIS-1</span>
+        <h3>2077</h3>
+        <p>Uma lua, um planeta caindo nela, um trem e nenhuma bateria de TemPad. Recomendamos levar carregador reserva para o apocalipse.</p>
+      </article>
+      <article class="era-card" data-at="0.86" data-year="∞" data-name="Fim dos Tempos">
+        <span class="ec-k">ERA ∞ · O TEAR E A ÁRVORE</span>
+        <h3>Fim dos Tempos</h3>
+        <p>No fim da linha existe um castelo, um tear e alguém segurando todas as histórias ao mesmo tempo. Departamento Jurídico prefere não comentar.</p>
+      </article>
+    </div>
+    <div class="ts-progress" aria-hidden="true">
+      <span>INÍCIO</span><div class="tsp-bar"><i id="ts-bar"></i></div><span>FIM</span>
+    </div>
+    <p class="ts-hint" aria-hidden="true">Mova o cursor para perturbar a linha. Com moderação.</p>
+  </div>
+</section>
+
+<!-- ============ 4 · CONSULTA DE VARIANTE ============ -->
+<section class="paper-section consulta" id="consulta" data-era="Arquivo Central" data-year="2077">
+  <div class="sec-head">
+    <span class="sec-num">03</span>
+    <h2 class="sec-title">Consulta de<br><span class="serif">Variante</span></h2>
+    <p class="sec-sub">Digite um nome. O Arquivo Central sabe o resto. Sempre soube.</p>
+  </div>
+
+  <div class="consulta-grid">
+    <form class="lookup card-paper" id="lookup-form" autocomplete="off">
+      <label class="field">
+        <span>Nome completo da variante</span>
+        <input id="lookup-name" name="name" type="text" placeholder="ex.: Loki Laufeyson" maxlength="40" required>
+      </label>
+      <label class="field">
+        <span>Linha de origem declarada</span>
+        <select id="lookup-line" name="line">
+          <option value="sagrada">Linha Sagrada (alegadamente)</option>
+          <option value="ramo">Ramificação não autorizada</option>
+          <option value="vazio">O Vazio</option>
+          <option value="ns">Não sei / prefiro não dizer</option>
+        </select>
+      </label>
+      <button class="btn btn-ink" type="submit" data-cursor="consultar"><span>Consultar Arquivo</span><i>⌕</i></button>
+      <p class="fine">Consultas são registradas. Consultas sobre si mesmo são registradas duas vezes.</p>
+    </form>
+
+    <article class="ficha" id="ficha" aria-live="polite">
+      <div class="ficha-empty">
+        <svg viewBox="0 0 120 120" aria-hidden="true"><rect x="20" y="14" width="80" height="96" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M34 38h52M34 52h52M34 66h36" stroke="currentColor" stroke-width="2"/><circle cx="82" cy="86" r="14" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3 3"/></svg>
+        <p>Nenhuma ficha aberta.<br><span>O arquivo está esperando você. Ele é paciente. Ele tem todo o tempo.</span></p>
+      </div>
+      <div class="ficha-body" hidden>
+        <header class="ficha-head">
+          <div><span class="fk">FICHA DE VARIANTE</span><h3 id="f-name">—</h3><span class="f-code" id="f-code">—</span></div>
+          <div class="f-photo" id="f-photo" aria-hidden="true"></div>
+        </header>
+        <dl class="ficha-dl">
+          <div><dt>Crime temporal</dt><dd id="f-crime">—</dd></div>
+          <div><dt>Primeiro desvio</dt><dd id="f-when">—</dd></div>
+          <div><dt>Linha de origem</dt><dd id="f-line">—</dd></div>
+        </dl>
+        <div class="threat">
+          <span class="fk">Nível de ameaça</span>
+          <div class="threat-scale" id="f-threat"><i></i><i></i><i></i><i></i><i></i></div>
+          <span class="threat-label" id="f-threat-label">—</span>
+        </div>
+        <div class="branch-chart">
+          <span class="fk">Gráfico de ramificação · probabilidade de divergência <b id="f-prob">—</b></span>
+          <canvas id="f-chart" width="560" height="170"></canvas>
+        </div>
+        <div class="sentence" id="f-sentence-wrap">
+          <span class="fk">Sentença</span>
+          <p id="f-sentence">—</p>
+          <div class="f-stamp" id="f-stamp">PODAR</div>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ============ 5 · MAPA DAS LINHAS ============ -->
+<section class="mapa cinema-soft" id="mapa" data-era="Sala de Monitoramento" data-year="2050">
+  <div class="sec-head">
+    <span class="sec-num">04</span>
+    <h2 class="sec-title light">Mapa das<br><span class="serif">Linhas do Tempo</span></h2>
+    <p class="sec-sub">Monitoramento em tempo real. Clique numa ramificação para podá-la. Ou não, e veja o que acontece com o Tear.</p>
+  </div>
+  <div class="crt-frame">
+    <div class="crt-screen">
+      <canvas id="map-canvas"></canvas>
+      <div class="crt-hud">
+        <div><span>RAMIFICAÇÕES ATIVAS</span><b id="m-active">0</b></div>
+        <div><span>PODADAS NESTE TURNO</span><b id="m-pruned">0</b></div>
+        <div class="loom"><span>CARGA DO TEAR TEMPORAL</span><b id="m-load">0%</b><div class="loom-bar"><i id="m-loom"></i></div></div>
+      </div>
+      <div class="crt-alert" id="m-alert">⚠ TEAR EM SOBRECARGA · PODA EMERGENCIAL NECESSÁRIA</div>
+      <div class="crt-glare" aria-hidden="true"></div>
+    </div>
+    <div class="crt-panel">
+      <button class="knob-btn" id="m-spawn" data-cursor="ramificar"><i></i>Provocar Evento Nexus</button>
+      <button class="knob-btn" id="m-reset" data-cursor="reset"><i></i>Reset em massa</button>
+      <label class="toggle"><input type="checkbox" id="m-auto"><span></span>Minutemen automáticos</label>
+      <span class="crt-model">MONITOR TVA-M7 · FÓSFORO ÂMBAR · NÃO BATA NA TELA</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6 · FORMULÁRIO DE PODA ============ -->
+<section class="paper-section poda" id="poda" data-era="Protocolo Geral" data-year="1985">
+  <div class="sec-head">
+    <span class="sec-num">05</span>
+    <h2 class="sec-title">Requisição<br><span class="serif">de Poda</span></h2>
+    <p class="sec-sub">Formulário TVA-PD-7B. Preencha com caneta preta. Não temos canetas. Boa sorte.</p>
+  </div>
+
+  <div class="poda-grid">
+    <form class="form-sheet" id="prune-form" novalidate autocomplete="off">
+      <div class="sheet-top">
+        <span>TVA-PD-7B</span><span>REQUISIÇÃO DE PODA</span><span>VIA 1/3</span>
+      </div>
+      <div class="sheet-row">
+        <label class="field line"><span>01 · Variante a ser podada</span><input name="variant" id="pf-variant" type="text" maxlength="40" placeholder="Nome, apelido ou descrição física"></label>
+      </div>
+      <div class="sheet-row two">
+        <label class="field line"><span>02 · Linha temporal</span>
+          <select name="line" id="pf-line">
+            <option value="">— selecione —</option>
+            <option>Sagrada (desvio leve)</option>
+            <option>Ramificação 1130-L</option>
+            <option>Ramificação de fim de semana</option>
+            <option>Uma muito parecida com esta</option>
+          </select>
+        </label>
+        <label class="field line"><span>03 · Ano do desvio</span><input name="year" id="pf-year" type="number" min="-9999" max="9999" placeholder="aaaa"></label>
+      </div>
+      <fieldset class="field crimes">
+        <legend>04 · Natureza do crime (marque todos que se aplicam)</legend>
+        <label><input type="checkbox" name="crime" value="Existir fora do roteiro"><span>Existir fora do roteiro</span></label>
+        <label><input type="checkbox" name="crime" value="Escolha não autorizada"><span>Escolha não autorizada</span></label>
+        <label><input type="checkbox" name="crime" value="Roubo de reset charge"><span>Roubo de reset charge</span></label>
+        <label><input type="checkbox" name="crime" value="Uso de sarcasmo em repartição"><span>Uso de sarcasmo em repartição</span></label>
+        <label><input type="checkbox" name="crime" value="Atraso ao próprio destino"><span>Atraso ao próprio destino</span></label>
+      </fieldset>
+      <label class="field line"><span>05 · Justificativa (mín. 3 palavras, máx. a eternidade)</span><textarea name="why" id="pf-why" rows="3" maxlength="400" placeholder="Descreva por que esta pessoa não deveria ter feito o que fez"></textarea></label>
+      <div class="sheet-row two">
+        <label class="field line urgency"><span>06 · Urgência</span>
+          <input type="range" name="urgency" id="pf-urg" min="1" max="5" value="3">
+          <output id="pf-urg-out">Moderada (até o fim dos tempos)</output>
+        </label>
+        <label class="field sign"><input type="checkbox" id="pf-sign"><span>Declaro que não estou agindo por livre-arbítrio.</span></label>
+      </div>
+      <div class="sheet-actions">
+        <button class="btn btn-ink" type="submit" data-cursor="protocolar"><span>Protocolar requisição</span><i>⎙</i></button>
+        <button class="btn btn-ghost" type="reset">Rasgar formulário</button>
+      </div>
+      <div class="stamp-zone" id="stamp-zone" aria-live="assertive">
+        <div class="stamp-tool" id="stamp-tool" aria-hidden="true"><i></i><b></b></div>
+        <div class="stamp-ink" id="stamp-ink"></div>
+      </div>
+    </form>
+
+    <aside class="receipt" id="receipt" aria-live="polite">
+      <div class="r-empty">
+        <p class="r-title">Comprovante de Protocolo</p>
+        <p>Aguardando requisição. O tempo médio de resposta é 0,3 segundo ou 900 anos, o que vier primeiro.</p>
+        <div class="r-perf" aria-hidden="true"></div>
+      </div>
+      <div class="r-body" hidden>
+        <p class="r-title">Comprovante de Protocolo</p>
+        <p class="r-proto" id="r-proto">—</p>
+        <dl id="r-dl"></dl>
+        <p class="r-verdict" id="r-verdict">—</p>
+        <svg class="r-barcode" id="r-barcode" viewBox="0 0 200 40" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <p class="r-foot">Guarde esta via. As outras duas já foram perdidas.</p>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- ============ 7 · EVENTO NEXUS ============ -->
+<section class="nexus cinema" id="nexus" data-era="Alerta Ômega" data-year="2026">
+  <div class="nexus-inner">
+    <span class="sec-num">06</span>
+    <p class="nexus-kicker"><span class="siren"></span>Boletim de Alerta Temporal · Grau Ômega</p>
+    <h2 class="nexus-title" data-text="EVENTO NEXUS">EVENTO NEXUS</h2>
+    <p class="nexus-sub">Detectamos uma convergência multiversal de grande porte prevista para a estreia de <b>Vingadores: Doomsday</b>
+      nos cinemas, em <b>18 de dezembro de 2026</b>. Todos os Caçadores devem comparecer ao Hall C. Pipoca não é reembolsável.</p>
+    <div class="countdown" id="countdown" role="timer" aria-live="off">
+      <div class="cd-cell"><b id="cd-d">000</b><span>dias</span></div>
+      <i class="cd-sep">:</i>
+      <div class="cd-cell"><b id="cd-h">00</b><span>horas</span></div>
+      <i class="cd-sep">:</i>
+      <div class="cd-cell"><b id="cd-m">00</b><span>min</span></div>
+      <i class="cd-sep">:</i>
+      <div class="cd-cell"><b id="cd-s">00</b><span>seg</span></div>
+    </div>
+    <p class="nexus-status" id="nexus-status">Probabilidade de ramificação: <b>99,98%</b> · Recomendação: não sair de casa. Exceto para o cinema.</p>
+  </div>
+</section>
+
+<!-- ============ 8 · DEPARTAMENTOS ============ -->
+<section class="paper-section deps" id="departamentos" data-era="Departamentos" data-year="1893">
+  <div class="sec-head">
+    <span class="sec-num">07</span>
+    <h2 class="sec-title">Departamentos<br><span class="serif">& servidores</span></h2>
+    <p class="sec-sub">Conheça quem trabalha incansavelmente por você. Literalmente: ninguém aqui lembra como se descansa.</p>
+  </div>
+
+  <div class="dep-grid">
+    <!-- Mobius -->
+    <article class="dep" id="dep-mobius" tabindex="0">
+      <span class="dep-n">A-01</span>
+      <div class="dep-art art-mobius" aria-hidden="true">
+        <svg viewBox="0 0 240 150" class="jetski-scene">
+          <path class="wave w1" d="M0 118 Q20 110 40 118 T80 118 T120 118 T160 118 T200 118 T240 118 V150 H0Z"/>
+          <path class="wave w2" d="M0 126 Q20 120 40 126 T80 126 T120 126 T160 126 T200 126 T240 126 V150 H0Z"/>
+          <g class="jetski">
+            <path d="M28 104 L96 104 Q104 104 108 96 L84 92 L70 80 L50 80 L44 92 L22 96 Z" fill="var(--door)"/>
+            <path d="M50 80 L58 70 L66 70 L70 80 Z" fill="var(--ink-c)"/>
+            <path d="M22 96 L108 96" stroke="var(--ink-c)" stroke-width="2"/>
+            <circle cx="62" cy="62" r="7" fill="var(--paper-c)" stroke="var(--ink-c)" stroke-width="2"/>
+            <path d="M58 68 L56 84 M66 70 L76 82" stroke="var(--ink-c)" stroke-width="3" stroke-linecap="round"/>
+            <g class="spray"><circle cx="18" cy="100" r="3"/><circle cx="10" cy="94" r="2"/><circle cx="6" cy="104" r="2.5"/><circle cx="14" cy="88" r="1.5"/></g>
+          </g>
+        </svg>
+        <div class="magazine"><b>JET SKI</b><span>MENSAL · ED. 47</span><i>Os 10 modelos que você nunca vai pilotar</i></div>
+      </div>
+      <h3>Análise de Variantes</h3>
+      <p class="dep-who">Agente Mobius M. Mobius · Analista Sênior</p>
+      <p>Especialista em variantes particularmente difíceis. Gosta de saladas de frutas, interrogatórios longos e de um certo veículo aquático que nunca pilotou.</p>
+      <button class="dep-btn" data-egg="jetski" data-cursor="vrummm">Realizar sonho do servidor</button>
+    </article>
+
+    <!-- O.B. / TemPad -->
+    <article class="dep" id="dep-ob" tabindex="0">
+      <span class="dep-n">R&A-02</span>
+      <div class="dep-art art-tempad" aria-hidden="false">
+        <div class="tempad" id="tempad">
+          <div class="tp-screen"><span id="tp-display">TEMPAD OK</span><div class="tp-door" id="tp-door"></div></div>
+          <div class="tp-keys">
+            <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+            <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+            <button data-k="C" class="k-c">C</button><button data-k="0">0</button><button data-k="GO" class="k-go">IR</button>
+          </div>
+        </div>
+      </div>
+      <h3>Recursos & Avanços</h3>
+      <p class="dep-who">O.B. · Técnico, autor do Manual (vol. 1 de 1.000)</p>
+      <p>Mantém TemPads, Time Doors e o Tear funcionando com fita adesiva e fé. Digite um ano no TemPad e aperte IR. Garantia não cobre paradoxos.</p>
+    </article>
+
+    <!-- B-15 -->
+    <article class="dep" id="dep-b15" tabindex="0">
+      <span class="dep-n">C-15</span>
+      <div class="dep-art art-b15" aria-hidden="true">
+        <div class="badge-b15" id="badge-b15" role="button" tabindex="0" aria-label="Distintivo B-15">
+          <svg viewBox="0 0 120 140"><path d="M60 6 L110 26 V70 Q110 114 60 134 Q10 114 10 70 V26Z" fill="none" stroke="currentColor" stroke-width="4"/><text x="60" y="84" text-anchor="middle" font-family="Archivo" font-weight="900" font-size="34" fill="currentColor">B-15</text><text x="60" y="108" text-anchor="middle" font-family="Courier Prime" font-size="10" fill="currentColor">CAÇADORA</text></svg>
+        </div>
+        <div class="memory" id="b15-memory"><span>MEMÓRIA NÃO AUTORIZADA DETECTADA</span><i>um dia de sol · um copo com gelo · um nome que não é um número</i></div>
+      </div>
+      <h3>Caçadores</h3>
+      <p class="dep-who">Caçadora B-15 · Unidade de Campo</p>
+      <p>A melhor da força. Nunca questiona ordens, nunca hesita, nunca lembra de nada. Clique no distintivo três vezes. Não conte para ninguém.</p>
+    </article>
+
+    <!-- Renslayer -->
+    <article class="dep" id="dep-rens" tabindex="0">
+      <span class="dep-n">J-00</span>
+      <div class="dep-art art-rens" aria-hidden="true">
+        <div class="file-folder" id="rens-file">
+          <div class="ff-tab">RENSLAYER, R.</div>
+          <div class="ff-body">
+            <p>Cargo: <s>Juíza</s> <s>Juíza-Chefe</s> <s>Fundadora?</s> <b>N/D</b></p>
+            <p>Status: <span class="rens-status">ATIVA</span></p>
+            <p>Paradeiro: <span class="rens-where">Gabinete 1</span></p>
+          </div>
+        </div>
+      </div>
+      <h3>Tribunal Temporal</h3>
+      <p class="dep-who">Juíza Ravonna Renslayer · <span class="rens-tag">cargo sob revisão</span></p>
+      <p>Presidiu milhares de julgamentos com imparcialidade absoluta. Seu histórico funcional é perfeitamente normal. Por favor, não abra a pasta.</p>
+      <button class="dep-btn" data-egg="rens" data-cursor="abrir">Abrir a pasta mesmo assim</button>
+    </article>
+
+    <!-- Guardiões -->
+    <article class="dep dep-wide" id="dep-keepers" tabindex="0">
+      <span class="dep-n">G-∞</span>
+      <div class="dep-art art-keepers" aria-hidden="true">
+        <svg viewBox="0 0 360 160" class="keepers" id="keepers-svg">
+          <g class="keeper k1"><path d="M40 150 L52 70 Q60 40 70 70 L82 150Z"/><circle cx="61" cy="46" r="13"/><path d="M48 34 Q61 18 74 34" class="crest"/></g>
+          <g class="keeper k2"><path d="M150 150 L164 60 Q180 22 196 60 L210 150Z"/><circle cx="180" cy="34" r="17"/><path d="M162 20 Q180 -2 198 20" class="crest"/></g>
+          <g class="keeper k3"><path d="M278 150 L290 70 Q298 40 306 70 L318 150Z"/><circle cx="298" cy="46" r="13"/><path d="M285 34 Q298 18 311 34" class="crest"/></g>
+          <g class="robot-reveal"><rect x="168" y="26" width="24" height="16" rx="2"/><circle cx="175" cy="34" r="2.5"/><circle cx="185" cy="34" r="2.5"/><path d="M180 42 v8 M170 50 h20"/></g>
+        </svg>
+      </div>
+      <h3>Guardiões do Tempo</h3>
+      <p class="dep-who">Fundadores · Imortais · Absolutamente orgânicos</p>
+      <p>Os três seres que criaram a TVA e a Linha Sagrada. Eles nunca recebem visitas, nunca falam em público e definitivamente não têm parafusos. Não clique na cabeça do do meio.</p>
+    </article>
+
+    <!-- Miss Minutes card -->
+    <article class="dep dep-mm" id="dep-mm" tabindex="0">
+      <span class="dep-n">IA-01</span>
+      <div id="dep-mm-host" class="mm-host dep-mm-rig" aria-hidden="true"></div>
+      <h3>Atendimento Inteligente</h3>
+      <p class="dep-who">Miss Minutes · Assistente de tudo</p>
+      <p>Disponível 24 horas por dia, em todos os dias que existirem. Ela sabe onde você está. Ela sempre soube. Fale com ela pelo relógio no canto da tela.</p>
+      <button class="dep-btn" data-egg="chat" data-cursor="conversar">Abrir atendimento</button>
+    </article>
+  </div>
+</section>
+
+</main>
+
+<!-- ============ RODAPÉ ============ -->
+<footer class="footer" id="footer">
+  <div class="foot-top">
+    <div class="foot-brand">
+      <svg class="brand-emblem big"><use href="#emblem"/></svg>
+      <p class="foot-motto">Para todo o sempre,<br><em>em triplicata.</em></p>
+    </div>
+    <div class="verdict-box" id="verdict-box">
+      <span class="fk">Sentença provisória do seu processo</span>
+      <p id="final-verdict">Calculando…</p>
+      <button class="btn btn-ghost small" id="open-dossier" data-cursor="dossiê">Ver dossiê completo</button>
+    </div>
+  </div>
+
+  <div class="terms">
+    <h4>Termos de Uso do Livre-Arbítrio <span>(versão 9.000.001)</span></h4>
+    <ol>
+      <li><b>1.1</b> O Usuário declara possuir livre-arbítrio para fins meramente decorativos.</li>
+      <li><b>1.2</b> Qualquer escolha feita neste site já havia sido feita antes, por você, no roteiro. Estamos apenas conferindo a assinatura.</li>
+      <li><b>2.1</b> Ao rolar esta página, o Usuário concorda em rolar esta página.</li>
+      <li><b>2.2</b> Arrependimentos devem ser protocolados com 300 anos de antecedência no formulário TVA-RG-1.</li>
+      <li><b>3.1</b> A TVA não se responsabiliza por variantes geradas por cliques acidentais, cliques intencionais, ou pela ausência de cliques.</li>
+      <li><b>3.2</b> Cookies não são utilizados. A Miss Minutes simplesmente se lembra.</li>
+      <li><b>4.1</b> Em caso de conflito entre estes Termos e a realidade, prevalecem estes Termos, e a realidade será podada.</li>
+      <li><b>4.2</b> O direito de discordar está garantido e será exercido em seu nome pela TVA.</li>
+      <li><b>5.0</b> Este é um site de fã, fictício, sem afiliação com quaisquer estúdios. Nenhuma linha do tempo real foi ferida.</li>
+    </ol>
+    <label class="agree"><input type="checkbox" id="agree" checked><span>Li e concordo com tudo, inclusive com o que ainda não foi escrito.</span></label>
+    <p class="agree-msg" id="agree-msg" aria-live="polite"></p>
+  </div>
+
+  <div class="foot-bottom">
+    <span>© ∞ Autoridade de Variância Temporal. Todos os tempos reservados.</span>
+    <span>Site de fã fictício · sem afiliação oficial</span>
+    <button class="screw" id="screw" aria-label="Parafuso suspeito" data-cursor="?"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 10h10" stroke="currentColor" stroke-width="1.5"/></svg></button>
+  </div>
+</footer>
+
+<!-- ============ DOCK DA MISS MINUTES + CHAT ============ -->
+<div class="mm-dock" id="mm-dock">
+  <div class="mm-bubble" id="mm-bubble" role="status" aria-live="polite"><p></p></div>
+  <button class="mm-dock-btn" id="mm-dock-btn" aria-label="Conversar com a Miss Minutes" aria-expanded="false">
+    <div id="mm-dock-host" class="mm-host"></div>
+  </button>
+</div>
+
+<section class="chat" id="chat" aria-label="Atendimento Miss Minutes" hidden>
+  <header class="chat-head">
+    <div><b>Atendimento · Miss Minutes</b><span><i class="dot"></i>online desde sempre</span></div>
+    <button class="icon-btn" id="chat-close" aria-label="Fechar atendimento">×</button>
+  </header>
+  <div class="chat-log" id="chat-log" aria-live="polite"></div>
+  <div class="chat-chips" id="chat-chips"></div>
+  <form class="chat-form" id="chat-form" autocomplete="off">
+    <input id="chat-input" type="text" placeholder="Digite sua dúvida existencial…" maxlength="200" aria-label="Mensagem para a Miss Minutes">
+    <button type="submit" aria-label="Enviar">➤</button>
+  </form>
+</section>
+
+<!-- ============ DOSSIÊ ============ -->
+<aside class="dossier" id="dossier" aria-label="Seu dossiê" hidden>
+  <header>
+    <span class="fk">DOSSIÊ DO VISITANTE</span>
+    <h3>Processo <b id="d-case">—</b></h3>
+    <button class="icon-btn" id="dossier-close" aria-label="Fechar dossiê">×</button>
+  </header>
+  <dl class="d-meta">
+    <div><dt>Primeira detecção</dt><dd id="d-first">—</dd></div>
+    <div><dt>Visitas</dt><dd id="d-visits">—</dd></div>
+    <div><dt>Eventos Nexus causados</dt><dd id="d-nexus">0</dd></div>
+    <div><dt>Desvio atual</dt><dd id="d-dev">0%</dd></div>
+  </dl>
+  <h4>Infrações registradas</h4>
+  <ol class="d-log" id="d-log"><li class="empty">Nenhuma. Ainda.</li></ol>
+  <button class="btn btn-ghost small" id="d-clear" data-cursor="apagar">Solicitar esquecimento</button>
+</aside>
+
+<!-- ============ TERMINAL CRT ============ -->
+<div class="terminal" id="terminal" role="dialog" aria-label="Terminal TVA" hidden>
+  <div class="term-crt">
+    <div class="term-out" id="term-out"></div>
+    <form class="term-line" id="term-form" autocomplete="off"><span class="prompt">TVA://&gt;</span><input id="term-input" type="text" spellcheck="false" aria-label="Comando"></form>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha512-dLxUelApnYxpLt6K2iomGngnHO83iUvZytA3YjDUCjT0HDOHKXnVYdf3hU4JjM8uEhxf9nD1/ey98U3t2vZ0qQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="js/core.js?v=2"></script>
+<script src="js/minutes.js?v=2"></script>
+<script src="js/chat.js?v=2"></script>
+<script src="js/scene.js?v=2"></script>
+<script src="js/features.js?v=2"></script>
+<script src="js/terminal.js?v=2"></script>
+<script src="js/main.js?v=2"></script>
+</body>
+</html>
